@@ -33,6 +33,8 @@ lines = [
     Line(vector(50, 200), vector(300, 100)),
     Line(vector(900, 100), vector(700, 150)),
     Line(vector(700, 200), vector(1200, 500)),
+    Line(vector(100, 600), vector(200, 500)),
+    Line(vector(200, 500), vector(100, 400)),
 ]
 
 bounded_vec = vector(0, 0)
@@ -105,45 +107,59 @@ while running:
     circle.p.y += dy
 
     # update
-    v = circle_dest.p - circle.p
-    r_up, r_down = arr(0, r), arr(0, -r)
-    # proj, _ = proj_matrix(v)
-    _, proj = proj_matrix(v)
-    rel_r_up, rel_r_down = np.dot(proj, r_up), np.dot(proj, r_down)
+    # r_up, r_down = arr(0, r), arr(0, -r)
+    # _, proj = proj_matrix(v)
+    # rel_r_up, rel_r_down = np.dot(proj, r_up), np.dot(proj, r_down)
 
-    if v.x > 0:
-        area_left = circle.p.x - r
-        area_right = circle_dest.p.x + r
-    else:
-        area_left = circle_dest.p.x - r
-        area_right = circle.p.x + r
-    if v.y > 0:
-        area_top = circle_dest.p.y + r
-        area_bottom = circle.p.y - r
-    else:
-        area_top = circle.p.y + r
-        area_bottom = circle_dest.p.y - r
-    area_rect = Rect(area_left, area_bottom, area_right - area_left, area_top - area_bottom)
+    collided = True
+    bound_pos = []
+    bound_vec = []
+    n_collision = 0
 
-    t_min = 99
-    collided = False
-    collided_idx = 99
-    collided_type = -1
-    for i, line in enumerate(lines):
-        # print(circle.p, line.s, circle_dest.p, v)
-        if rect_collision(area_rect, line.rect):
-            check, c_type = c_line_collision(circle, v, line)
-            if 0 < check < t_min:
-                t_min = check
-                collided = True
-                collided_idx = i
-                collided_type = c_type
-    if collided:
-        circle_collide.p = circle.p + t_min * v
-        if collided_type == Line.LINE:
-            bounded_vec = lines[collided_idx].bound_line((1 - t_min) * v)
-        else:
-            bounded_vec = lines[collided_idx].bound_point(circle_collide.p, (1 - t_min) * v, collided_type)
+    pos = circle.p
+    v = circle_dest.p - pos
+
+    while collided:
+        pass
+        if True:
+            if v.x > 0:
+                area_left = pos.x - r
+                area_right = (pos + v).x + r
+            else:
+                area_left = (pos + v).x - r
+                area_right = pos.x + r
+            if v.y > 0:
+                area_top = (pos + v).y + r
+                area_bottom = pos.y - r
+            else:
+                area_top = pos.y + r
+                area_bottom = (pos + v).y - r
+        area_rect = Rect(area_left, area_bottom, area_right - area_left, area_top - area_bottom)
+
+        t_min = 99
+        collided = False
+        collided_idx = 99
+        collided_type = -1
+        for i, line in enumerate(lines):
+            # print(circle.p, line.s, circle_dest.p, v)
+            # if True:
+            if rect_collision(area_rect, line.rect):
+                check, c_type = c_line_collision(pos, r, v, line)
+                if 0 < check < t_min:
+                    t_min = check
+                    collided = True
+                    collided_idx = i
+                    collided_type = c_type
+        if collided:
+            # circle_collide.p = circle.p + t_min * v
+            pos = pos + t_min * v
+            if collided_type == Line.LINE:
+                v = lines[collided_idx].bound_line((1 - t_min) * v)
+            else:
+                v = lines[collided_idx].bound_point(pos, (1 - t_min) * v, collided_type)
+            bound_pos.append(pos)
+            bound_vec.append(v)
+            n_collision += 1
 
     # draw
     screen.fill(WINDOW_BG_COLOR)
@@ -152,9 +168,16 @@ while running:
 
     pg.draw.circle(screen, COLOR_CYAN, circle.p, r, 1)
     pg.draw.circle(screen, COLOR_GREEN, circle_dest.p, r, 1)
-    if collided:
-        pg.draw.circle(screen, COLOR_MAGENTA, circle_collide.p, r, 1)
-        pg.draw.aaline(screen, COLOR_MAGENTA, circle_collide.p, circle_collide.p + bounded_vec)
+    # if collided:
+    #     pg.draw.circle(screen, COLOR_MAGENTA, circle_collide.p, r, 1)
+    #     pg.draw.aaline(screen, COLOR_MAGENTA, circle_collide.p, circle_collide.p + bounded_vec)
+    for i in range(n_collision):
+        pg.draw.circle(screen, COLOR_MAGENTA, bound_pos[i], r, 1)
+        if i < n_collision - 1:
+            pg.draw.aaline(screen, COLOR_MAGENTA, bound_pos[i], bound_pos[i + 1])
+        else:
+            pg.draw.aaline(screen, COLOR_MAGENTA, bound_pos[i], bound_pos[i] + bound_vec[i])
+
     for i in range(len(lines)):
         # pg.draw.rect(screen, COLOR_RED, lines[i].rect.get_rect(), 1)
         pg.draw.aaline(screen, COLOR_WHITE, lines[i].s, lines[i].e)
@@ -162,8 +185,8 @@ while running:
 
     pg.draw.aaline(screen, COLOR_RED, circle.p, circle_dest.p)
 
-    pg.draw.aaline(screen, (0, 255, 127), circle.p + rel_r_up, circle_dest.p + rel_r_up)
-    pg.draw.aaline(screen, (0, 255, 127), circle.p + rel_r_down, circle_dest.p + rel_r_down)
+    # pg.draw.aaline(screen, (0, 255, 127), circle.p + rel_r_up, circle_dest.p + rel_r_up)
+    # pg.draw.aaline(screen, (0, 255, 127), circle.p + rel_r_down, circle_dest.p + rel_r_down)
 
     pg.display.flip()
 

@@ -140,8 +140,9 @@ def c_c_collision(c1, v1, c2, v2):
     _t = c_origin_collision(rel_pos, rel_v, rel_d)
     return _t
 
-def c_l_collision(c, v, line):
-    _x, _y = line.projection(c.p - line.s)
+# def c_l_collision(c, v, line):
+def c_l_collision(pos, r, v, line):
+    _x, _y = line.projection(pos - line.s)
     _dx, _dy = line.projection(v)
 
     # print((_x, _y), (_dx, _dy))
@@ -160,11 +161,11 @@ def c_l_collision(c, v, line):
         y_enter = -99
         y_exit = 99
     elif _dy > 0:
-        y_enter = (-c.r - _y) / _dy
-        y_exit = (c.r - _y) / _dy
+        y_enter = (-r - _y) / _dy
+        y_exit = (r - _y) / _dy
     else:
-        y_enter = (c.r - _y) / _dy
-        y_exit = (-c.r - _y) / _dy
+        y_enter = (r - _y) / _dy
+        y_exit = (-r - _y) / _dy
 
     # print((x_enter, x_exit), (y_enter, y_exit))
     if x_enter > 1 or y_enter > 1:
@@ -178,10 +179,10 @@ def c_l_collision(c, v, line):
     return max(x_enter, y_enter)
 
 
-def c_line_collision(c, v, line):
-    t_s = c_origin_collision(c.p - line.s, v, c.r)
-    t_e = c_origin_collision(c.p - line.e, v, c.r)
-    t_l = c_l_collision(c, v, line)
+def c_line_collision(pos, r, v, line):
+    t_s = c_origin_collision(pos - line.s, v, r)
+    t_e = c_origin_collision(pos - line.e, v, r)
+    t_l = c_l_collision(pos, r, v, line)
 
     if t_s < t_l and t_s < t_e:
         return t_s, Line.START
