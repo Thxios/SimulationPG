@@ -251,4 +251,4 @@ dmypy.json
 cython_debug/
 
 AAdraw.py
-circle_col.py
+dot.py
